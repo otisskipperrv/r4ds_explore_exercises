@@ -243,7 +243,7 @@ filter(diamonds, carat > 3)
 # Ch. 5 Problems ----------------------------------------------------------
 #5.2.4
 #1)
-library(tidyverse)
+
 library(nycflights13)
 filter(flights, arr_delay >= 120)
 filter(flights, dest == 'IAH' | dest == 'HOU')
