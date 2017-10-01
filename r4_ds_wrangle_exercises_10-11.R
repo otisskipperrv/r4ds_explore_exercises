@@ -102,3 +102,33 @@ parse_number("123,456", locale = locale(grouping_mark =  "."))
 parse_date('1/15/2001',locale = locale(date_format='%m/%d/%Y'))
 ?  parse_date('1/15/2001 01:23',locale = locale(date_format='%m/%d/%Y', time_format = '%H:%M'))
 parse_date('01:23',locale = locale(time_format='%H%M'))
+
+#4) Lucky me, I live within the US
+
+#5)
+?read_csv
+# From help file: "read_csv2() uses ; for separators, instead of ,. This is common in European countries which use , as the decimal separator."
+
+#6) 
+# From: https://www.terena.org/activities/multiling/ml-docs/iso-8859.html
+#ISO-8859-1
+#"Latin 1 covers most West European languages such as Albanian, Catalan, Danish, Dutch, English, Faeroese, Finnish, French, German, Galician, Irish, Icelandic, Italian, Norwegian, Portuguese, Spanish, and Swedish. The lack of the ligatures Dutch ij, French oe and ,,German`` quotation marks is tolerable."
+#ISO-8859-2
+#"Latin 2 is used for most Latin-written Slavic and Central European languages: Czech, German, Hungarian, Polish, Rumanian, Croatian, Slovak, Slovene."
+
+#From: http://ergoemacs.org/emacs/unicode_basics.html
+# GB 18030 (Used in China, contains all Unicode chars).
+# EUC (Extended Unix Code). Used in Japan.
+# IEC 8859 series (used for most European langs)
+
+#But UTF-16 seems to cover everything
+
+#7)
+
+d1 <- parse_date("January 1, 2010", "%B %d, %Y")
+d2 <- parse_date("2015-Mar-07", "%Y-%b-%d")
+d3 <- parse_date("06-Jun-2017","%d-%b-%Y")
+d4 <- parse_date(c("August 19 (2015)", "July 1 (2015)"),"%B %d (%Y)")
+d5 <- parse_date("12/30/14","%m/%d/%y") # Dec 30, 2014
+t1 <- parse_time("1705", "%H%M")
+t2 <- parse_time("11:15:10.12 PM", "%I:%M:%OS %p")
