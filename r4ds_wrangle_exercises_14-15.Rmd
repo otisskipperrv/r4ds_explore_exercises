@@ -1,0 +1,20 @@
+---
+title: "R4DS Exercises 14-15"
+output: html_notebook
+---
+
+# Chapter 14
+
+__14.2.5__  
+_1_  
+Here's some RCode
+```{r}
+test_r_code <- seq(1:10)
+```
+
+_2_   
+Here's some notes
+```{r}
+other_fake_stuff <- seq(1:5)
+```
+
