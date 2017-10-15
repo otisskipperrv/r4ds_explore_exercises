@@ -3,18 +3,277 @@ title: "R4DS Exercises 14-15"
 output: html_notebook
 ---
 
-# Chapter 14
-
-__14.2.5__  
-_1_  
-Here's some RCode
+#### Load Packages
+Code to load necessary packages
 ```{r}
-test_r_code <- seq(1:10)
+library(tidyverse)
+library(stringr)
+library(forcats)
 ```
 
-_2_   
-Here's some notes
+# Chapter 14
+
+####__14.2.5__  
+
+_1_  
 ```{r}
-other_fake_stuff <- seq(1:5)
+?paste
+?paste0
+paste0(1:12, c("st", NA, "rd", rep("th", 9)))
+str_c(1:12, c("st", NA, "rd", rep("th", 9)))
+```
+paste0 has a default separator of nothing ("") - just like calling paste(..., sep = "")  
+Functions are equivalent to str_c in the stringr package  
+Paste functions will combine a legitimate string & NA into a string, whereas Stringr overwrites the combination with NA  
+ie: differences in 2nd value of code output from above  
+
+
+_2_   
+sep is used to either combine strings explicitly passed to str_c or strings across vectors passed to str_c  
+collapse is used to combine strings within a vector
+
+
+_3_
+
+```{r}
+x <- "abcde"
+len <- str_length(x)
+str_sub(x, len/2+1, len/2+1)
+```
+If string length is even this function grabs the character at the ceiling(length) position
+
+_4_ 
+```{r}
+?str_wrap
+output <- "str_wrap is good for formatting strings into human readable scentences & paragraphs and adjusting things like width/indenting. You may want to use it when outputting long text strings into the consolse."
+cat(str_wrap(output, width = 30), "\n")
+
+```
+
+_5_  
+str_trim will trim whitespace from the beginning/end of a string
+str_pad will add whitespace to beginning/end
+
+_6_  
+Create function to deal with comma separated strings
+```{r}
+
+oxfordComma <- function(v) {
+if(length(v) == 0){
+  print("Length 0 vector - you'll get a 0 character vector")
+}
+commas <- str_c(v[1:length(v)-1], collapse = ", ")
+output <- str_c(commas, v[length(v)], sep = ", and ")
+output
+}
+x <- c("a", "b", "c", "d")
+oxfordComma(x)
+
+```
+
+
+####__14.3.1.1__
+_1_  
+Explanation comes from earlier in book:  
+You need "\\\\" to just match "\" (which has to be written "\\" as a string)
+"\" - being used as escape but nothing follows it
+"\\" - escape into a single "\", but actually have to match "\\"
+"\\\" - escapte into a single "\" but then escape into nothing after that
+
+_2_ 
+```{r}
+str_view("\"'\\", "\"'\\\\" )
+```
+
+_3_
+```{r}
+str_view(".x.y.z", "\\..\\..\\.." )
+```
+
+
+####__14.3.2.1__
+_1_  
+```{r}
+str_view("$^$", "\\$\\^\\$")
+```
+
+_2_  
+```{r}
+str_view(stringr::words, "^y", match = TRUE)
+str_view(stringr::words, "x$", match = TRUE)
+str_view(stringr::words, "^...$", match = TRUE)
+str_view(stringr::words, "^.......", match = TRUE)
+
+```
+
+####__14.3.3.1__
+_1_  
+```{r}
+str_view(stringr::words, "^[aeiou]", match = TRUE)
+str_view(stringr::words, "^[^aeiou]+$", match = TRUE)
+str_view(stringr::words, "[^e]ed$" , match = TRUE)
+str_view(stringr::words, "(ing|ise)$" , match = TRUE)
+```
+
+_2_
+```{r}
+str_view(stringr::words, "[^c]ie" , match = TRUE)
+
+```
+
+_3_  
+In dataset q is always followed by u
+```{r}
+str_view(stringr::words, "q[^u]", match = TRUE)
+```
+
+_4_  
+Assume british english uses 'our' instead of 'or' (favor, color, etc...)
+```{r}
+str_view(stringr::words, "our", match = TRUE)
+
+```
+
+_5_
+```{r}
+str_view("828-275-4007", "\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d", match = TRUE)
+```
+
+
+####__14.4.2__
+
+_1_
+```{r}
+#1
+str_view(stringr::words, "(^x)|(x$)", match = TRUE)
+
+word1 <- data.frame(words)
+word1$endx <- str_detect(words, "x$")
+word1$startx <- str_detect(words, "^x")
+word1 %>% 
+  filter(endx == TRUE | startx == TRUE)
+
+#2
+str_view(stringr::words, "^[aeiou].*[^aeiou]$", match = TRUE)
+
+word2 <- data.frame(words)
+word2$startVowel <- str_detect(words, "^[aeiou]")
+word2$endCons <- str_detect(words, "[^aeiou]$")
+word2 %>% 
+  filter(startVowel == TRUE & endCons == TRUE)
+
+
+#3
+
+# Don't know the order the vowels will appear
+# Can guaruntee 5 vowels - but not that they're unique amongst vowels
+str_view(stringr::words, ".*[aeiou].*[aeiou].*[aeiou].*[aeiou].*", match = TRUE)
+# For a single Regex have to have every possible permutation: 5! = 120 ()
+# Found a permutation of all 120 combos on stack overflow (https://unix.stackexchange.com/questions/156134/grep-to-find-words-with-all-vowels)
+str_view("eiousa", "a.*e.*i.*o.*u|a.*e.*i.*u.*o|a.*e.*o.*i.*u|a.*e.*o.*u.*i|a.*e.*u.*i.*o|a.*e.*u.*o.*i|a.*i.*e.*o.*u|a.*i.*e.*u.*o|a.*i.*o.*e.*u|a.*i.*o.*u.*e|a.*i.*u.*e.*o|a.*i.*u.*o.*e|a.*o.*e.*i.*u|a.*o.*e.*u.*i|a.*o.*i.*e.*u|a.*o.*i.*u.*e|a.*o.*u.*e.*i|a.*o.*u.*i.*e|a.*u.*e.*i.*o|a.*u.*e.*o.*i|a.*u.*i.*e.*o|a.*u.*i.*o.*e|a.*u.*o.*e.*i|a.*u.*o.*i.*e|e.*a.*i.*o.*u|e.*a.*i.*u.*o|e.*a.*o.*i.*u|e.*a.*o.*u.*i|e.*a.*u.*i.*o|e.*a.*u.*o.*i|e.*i.*a.*o.*u|e.*i.*a.*u.*o|e.*i.*o.*a.*u|e.*i.*o.*u.*a|e.*i.*u.*a.*o|e.*i.*u.*o.*a|e.*o.*a.*i.*u|e.*o.*a.*u.*i|e.*o.*i.*a.*u|e.*o.*i.*u.*a|e.*o.*u.*a.*i|e.*o.*u.*i.*a|e.*u.*a.*i.*o|e.*u.*a.*o.*i|e.*u.*i.*a.*o|e.*u.*i.*o.*a|e.*u.*o.*a.*i|e.*u.*o.*i.*a|i.*a.*e.*o.*u|i.*a.*e.*u.*o|i.*a.*o.*e.*u|i.*a.*o.*u.*e|i.*a.*u.*e.*o|i.*a.*u.*o.*e|i.*e.*a.*o.*u|i.*e.*a.*u.*o|i.*e.*o.*a.*u|i.*e.*o.*u.*a|i.*e.*u.*a.*o|i.*e.*u.*o.*a|i.*o.*a.*e.*u|i.*o.*a.*u.*e|i.*o.*e.*a.*u|i.*o.*e.*u.*a|i.*o.*u.*a.*e|i.*o.*u.*e.*a|i.*u.*a.*e.*o|i.*u.*a.*o.*e|i.*u.*e.*a.*o|i.*u.*e.*o.*a|i.*u.*o.*a.*e|i.*u.*o.*e.*a|o.*a.*e.*i.*u|o.*a.*e.*u.*i|o.*a.*i.*e.*u|o.*a.*i.*u.*e|o.*a.*u.*e.*i|o.*a.*u.*i.*e|o.*e.*a.*i.*u|o.*e.*a.*u.*i|o.*e.*i.*a.*u|o.*e.*i.*u.*a|o.*e.*u.*a.*i|o.*e.*u.*i.*a|o.*i.*a.*e.*u|o.*i.*a.*u.*e|o.*i.*e.*a.*u|o.*i.*e.*u.*a|o.*i.*u.*a.*e|o.*i.*u.*e.*a|o.*u.*a.*e.*i|o.*u.*a.*i.*e|o.*u.*e.*a.*i|o.*u.*e.*i.*a|o.*u.*i.*a.*e|o.*u.*i.*e.*a|u.*a.*e.*i.*o|u.*a.*e.*o.*i|u.*a.*i.*e.*o|u.*a.*i.*o.*e|u.*a.*o.*e.*i|u.*a.*o.*i.*e|u.*e.*a.*i.*o|u.*e.*a.*o.*i|u.*e.*i.*a.*o|u.*e.*i.*o.*a|u.*e.*o.*a.*i|u.*e.*o.*i.*a|u.*i.*a.*e.*o|u.*i.*a.*o.*e|u.*i.*e.*a.*o|u.*i.*e.*o.*a|u.*i.*o.*a.*e|u.*i.*o.*e.*a|u.*o.*a.*e.*i|u.*o.*a.*i.*e|u.*o.*e.*a.*i|u.*o.*e.*i.*a|u.*o.*i.*a.*e|u.*o.*i.*e.*a")
+
+#str_detect helps simplify
+word3 <- data.frame(words)
+word3$a <- str_detect(words, "a")
+word3$e <- str_detect(words, "e")
+word3$i <- str_detect(words, "i")
+word3$o <- str_detect(words, "o")
+word3$u <- str_detect(words, "u")
+word3 %>% 
+  filter(a == TRUE & e == TRUE & i == TRUE & o == TRUE & u == TRUE)
+
+
+```
+No words in the stringr::words data with all vowels
+
+_2_
+
+```{r}
+
+word4 <- data.frame(words)
+word4$length <- str_length(word4$words)
+word4$vowels <- str_count(word4$words, "[aeiou]")
+word4 %>% 
+  mutate(vowelPct = vowels / length) %>% 
+  arrange(desc(vowelPct))
+word4 %>% 
+  arrange(desc(vowels))
+
+```
+"appropriate", "associate", "available", "colleague", "encourage", "experience", "individual", "television" all have 5 vowels (all tied for highest count)  
+"a" has the highest vowel pct (100%), followed by "area" & "idea" at 75%
+
+####__14.4.6.1__
+_1_
+```{r}
+"apples, pears, and bananas" %>% 
+  str_replace("and", "") %>% 
+  str_split(",")
+```
+
+_2_
+If a string has multiple spaces than str_split(" ") will bring in blank spaces as strings
+
+_3_
+```{r}
+str_split("test string", "")
+```
+Breaks the string into all individual characters
+
+####__15.4.1__
+ _1_
+There are 41 values for tvhour above 18 (which means people are only wathcing tv then sleeping - some values are even 24 hours which means no sleep)
+Should consider excluding outliers or unreasonable values (then mean could be a good value)
+
+```{r}
+gss_cat %>% 
+  select(tvhours) %>% 
+  filter(tvhours > 18) %>% 
+  count()
+ 
+```
+
+_2_
+Year: principled  
+Marital: arbitrary  
+Age: principled  
+Race: arbitrary  
+rincome: principled  
+partyid: arbitrary  
+relig: arbitrary  
+denom: arbitrary  
+tvhours: principled
+
+_3_  
+The levels in the front get plotted as the bottom values (No answer and Don't know were the other 2 levels in the front)
+
+
+####__15.5.1__
+Relatively flat trends over time looking at the bar graph below
+Small trend of more Independents & 'others' but no large trends in any direction
+ _1_
+```{r}
+df <- gss_cat %>%
+  mutate(partyid = fct_collapse(partyid,
+    other = c("No answer", "Don't know", "Other party"),
+    rep = c("Strong republican", "Not str republican"),
+    ind = c("Ind,near rep", "Independent", "Ind,near dem"),
+    dem = c("Not str democrat", "Strong democrat")
+  ))
+
+df %>% 
+  ggplot(aes(x = year, group = partyid, fill = partyid)) + 
+  geom_bar(position = "fill")  
+```
+_2_
+Collapse rincome into smaller groups
+```{r}
+gss_cat %>%
+  mutate(rincome = fct_collapse(rincome,
+    unkown = c("No answer", "Don't know", "Refused", "Not applicable"),
+    ZeroTo5K = c("Lt $1000", "$1000 to 2999", "$3000 to 3999", "$4000 to 4999"),
+    FiveKto10K = c("$5000 to 5999", "$6000 to 6999", "$7000 to 7999", "$8000 to 9999"),
+    TenKOrMore = c("$10000 - 14999", "$15000 - 19999", "$20000 - 24999", "$25000 or more")
+  ))
 ```
 
