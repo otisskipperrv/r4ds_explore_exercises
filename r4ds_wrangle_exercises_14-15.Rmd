@@ -72,7 +72,7 @@ oxfordComma(x)
 ```
 
 
-####__14.3.1.1__
+####__14.3.1.1__  
 _1_  
 Explanation comes from earlier in book:  
 You need "\\\\" to just match "\" (which has to be written "\\" as a string)
@@ -91,7 +91,7 @@ str_view(".x.y.z", "\\..\\..\\.." )
 ```
 
 
-####__14.3.2.1__
+####__14.3.2.1__  
 _1_  
 ```{r}
 str_view("$^$", "\\$\\^\\$")
@@ -106,7 +106,7 @@ str_view(stringr::words, "^.......", match = TRUE)
 
 ```
 
-####__14.3.3.1__
+####__14.3.3.1__  
 _1_  
 ```{r}
 str_view(stringr::words, "^[aeiou]", match = TRUE)
@@ -140,8 +140,8 @@ str_view("828-275-4007", "\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d", match = TRUE)
 ```
 
 
-####__14.4.2__
-
+####__14.4.2__  
+ 
 _1_
 ```{r}
 #1
@@ -203,7 +203,7 @@ word4 %>%
 "appropriate", "associate", "available", "colleague", "encourage", "experience", "individual", "television" all have 5 vowels (all tied for highest count)  
 "a" has the highest vowel pct (100%), followed by "area" & "idea" at 75%
 
-####__14.4.6.1__
+####__14.4.6.1__  
 _1_
 ```{r}
 "apples, pears, and bananas" %>% 
@@ -220,7 +220,7 @@ str_split("test string", "")
 ```
 Breaks the string into all individual characters
 
-####__15.4.1__
+####__15.4.1__  
  _1_
 There are 41 values for tvhour above 18 (which means people are only wathcing tv then sleeping - some values are even 24 hours which means no sleep)
 Should consider excluding outliers or unreasonable values (then mean could be a good value)
@@ -248,7 +248,7 @@ _3_
 The levels in the front get plotted as the bottom values (No answer and Don't know were the other 2 levels in the front)
 
 
-####__15.5.1__
+####__15.5.1__  
 Relatively flat trends over time looking at the bar graph below
 Small trend of more Independents & 'others' but no large trends in any direction
  _1_
