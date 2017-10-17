@@ -1,0 +1,16 @@
+---
+title: "Otis Exercises Chapter 16"
+output: html_notebook
+---
+
+### Chapter 16 
+
+#### 16.2.4  
+
+_1_
+
+
+### 16.3.4  
+
+
+### 16.4.5  
