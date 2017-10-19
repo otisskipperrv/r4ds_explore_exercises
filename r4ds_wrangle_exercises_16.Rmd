@@ -3,14 +3,274 @@ title: "Otis Exercises Chapter 16"
 output: html_notebook
 ---
 
+### Load Packages
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(nycflights13)
+library(stringr)
+```
+
+
 ### Chapter 16 
+
 
 #### 16.2.4  
 
-_1_
+_1_  
+If a date is involid it will throw a 'failed to parse' error, but other dates will still be parsed in the vector
+```{r}
+ymd(c("2010-10-10", "bananas"))
+```
+
+_2_  
+`tzone` defines from which timezone we want to get "today's" date. Important to be aware of because if it's 11pm East Coast time today(tz = "EST") will return 1 day before today(tz = "UTC")
 
 
-### 16.3.4  
+
+_3_
+```{r, eval = FALSE}
+d1 <- mdy("January 1, 2010")
+d2 <- ymd("2015-Mar-07")
+d3 <- dmy("06-Jun-2017")
+d4 <- mdy(c("August 19 (2015)", "July 1 (2015)"))
+d5 <- mdy("12/30/14") # Dec 30, 2014
+```
 
 
-### 16.4.5  
+#### 16.3.4  
+_Build flights\_dt table_ 
+Use code provided in r4ds book
+```{r, eval = FALSE, echo=TRUE}
+
+make_datetime_100 <- function(year, month, day, time) {
+  make_datetime(year, month, day, time %/% 100, time %% 100)
+}
+
+flights_dt <- flights %>% 
+  filter(!is.na(dep_time), !is.na(arr_time)) %>% 
+  mutate(
+    dep_time = make_datetime_100(year, month, day, dep_time),
+    arr_time = make_datetime_100(year, month, day, arr_time),
+    sched_dep_time = make_datetime_100(year, month, day, sched_dep_time),
+    sched_arr_time = make_datetime_100(year, month, day, sched_arr_time)
+  ) %>% 
+  select(origin, dest, ends_with("delay"), ends_with("time"))
+
+```
+
+_1_  
+Looking at a freq_poly across months the distribution of flight times within a day seems relatively consistent over the year. There is a slight trend of more flights happening between hours 10 & 20 towards the end of the year, but even that trend is slight.
+
+```{r, echo = TRUE}
+flights_dt %>% 
+  mutate(dep_hour = hour(dep_time), dep_month = month(dep_time)) %>% 
+  ggplot(aes(x = dep_hour, group = dep_month, color = dep_month)) +
+  geom_freqpoly(bins = 24)
+```
+
+_2_  
+See a consistent trend in relation between sched_dep_time, dep_time & dep_delay. As the distance between sched_dep_time & dep_time increases we see dep_delay increaes as well (which is exactly what we'd expect to see)
+```{r}
+flights_dt %>% 
+  mutate(sched_dep_time = update(sched_dep_time, yday = 1), 
+         dep_time = update(dep_time, yday = 1)) %>% 
+  filter(dep_delay < 750) %>% #get rid of outliers so color distinction is more clear
+  ggplot(aes(x = sched_dep_time, y = dep_time, color = dep_delay)) +
+  geom_point(size = 1)
+
+```
+
+_3_ 
+Expect as `arr_time - dep_time` increases so would air_time, but that doesn't seem to be the case. We have 2 distinct large groups of points, and within those even a few more groups (but the trend within each of these subgroups is that as the difference increases so does air_time). 
+
+```{r}
+flights_dt %>% 
+  ggplot(aes(x = arr_time - dep_time, y = air_time)) +
+  geom_point()
+```
+
+The negative group is our first issue: looking at that group we can determine that there is a data entry error. A glith that leaves NY on '2013-01-01 19:29:00' arrives in BQN at '2013-01-01 00:03:00'. This should be '2013-01-02 00:03:00', but it seems that in the raw data any flight that leaves one day and lands the next is actually being logged as having landed the morning of the day it departed (consistently around 1200 minutes before dep_time). This is what causes that negative group.
+```{r}
+flights_dt %>% 
+  mutate(diff = arr_time - dep_time) %>% 
+  select(origin, dest, dep_time, arr_time, diff, air_time) %>% 
+  filter(diff < 0)
+```
+
+If we ignore the negative values we can look at the corrolation patterns for the positive diff values. Here we see lots of subgroups with the same trends. Breaking out by airport we can see that these subgroups are caused by different time zones (variation within the subgroups most likely due to wind speed, weather etc...)
+
+```{r}
+flights_dt %>% 
+  mutate(diff = arr_time - dep_time) %>% 
+  filter(diff > 0, dest %in% c('CLT','ORD','LAX', 'HNL')) %>% 
+  ggplot(aes(x = diff, y = air_time, group = dest)) +
+  geom_point() +
+  facet_grid(.~dest)
+```
+
+_4_  
+We should use dep_time vs sched_dep_time depending on what exactly we're looking for (when the delayed flights should have left vs when they actually left).  
+Plotting both graphs we see that the trend is that as the day moves on delays become more and more prominent for flights that should have taken off. This causes most flights to keep leaving later and later, and we actually see that a lot of evening flights get delayed so bad they don't end up taking off until the next morning.
+```{r}
+flights_dt %>% 
+  mutate(sched_dep_time = update(sched_dep_time, yday = 1)) %>% 
+  mutate(sched_dep_hour = hour(sched_dep_time)) %>% 
+  group_by(sched_dep_hour) %>% 
+  summarise(avg_dep_delay = mean(dep_delay)) %>% 
+  ggplot(aes(x = sched_dep_hour, y = avg_dep_delay)) +
+  geom_bar(stat = "identity")
+```
+
+```{r}
+flights_dt %>% 
+  mutate(dep_time = update(dep_time, yday = 1)) %>% 
+  mutate(dep_hour = hour(dep_time)) %>% 
+  group_by(dep_hour) %>% 
+  summarise(avg_dep_delay = mean(dep_delay)) %>% 
+  ggplot(aes(x = dep_hour, y = avg_dep_delay)) +
+  geom_bar(stat = "identity")
+
+```
+
+
+_5_  
+To avoid delays you should fly on Saturday
+```{r}
+flights_dt %>% 
+  mutate(sched_dep_dow = wday(sched_dep_time)) %>% 
+  group_by(sched_dep_dow) %>%  
+  summarise(avg_dep_delay = mean(dep_delay)) %>% 
+  ggplot(aes(x = sched_dep_dow, y = avg_dep_delay)) +
+  geom_bar(stat = "identity")
+
+```
+
+_6_  
+Both distributions have a skew. Carat tails off with almost no values after 2.5 even though carat can go up to 3. Sched_dep_time has a skew in the opposite direction, where 0-500 are valid values (a plane could leave at that time) but we see nothing there. 
+```{r}
+diamonds %>% 
+  ggplot(aes(x = carat)) + 
+  geom_histogram(bins = 20)
+```
+
+```{r}
+flights %>% 
+  ggplot(aes(sched_dep_time)) + 
+  geom_histogram(bins = 20)
+```
+
+
+_7_  
+We can see a higher proportion of early flights in the 20-30 & 50-60 time ranges, confirming the hypothesis.
+```{r, echo=TRUE}
+flights_dt %>% 
+  mutate(left_early = ifelse(dep_delay > 0, 0, 1)) %>% 
+  mutate(dep_minute = minute(dep_time)) %>% 
+  ggplot(aes(x = dep_minute, group = left_early, fill = left_early)) +
+  geom_histogram(bins = 60) +
+  viridis::scale_fill_viridis()
+```
+
+
+#### 16.4.5  
+
+_Mutate table to Include Overnight_
+```{r}
+flights_dt <- flights_dt %>% 
+  mutate(
+    overnight = arr_time < dep_time,
+    arr_time = arr_time + days(overnight * 1),
+    sched_arr_time = sched_arr_time + days(overnight * 1)
+  )
+```
+
+
+_1_  
+Since months have 28, 29, 30 & 31 days there is no standard for dmonths()
+
+_2_  
+`flights_dt$overnight` is a boolean vector, so `days(flights_dt$overnight*1)` will multiply a TRUE/FALSE value times 1, which will give a vector of 1s and 0s. Asking for `days()` of that vector will return 1 day (`1D 0H 0S`) for the 1 values and 0 days (`0S`) for the 0 values 
+  
+_3_
+```{r, eval=FALSE, echo = TRUE}
+mons <- seq(1:12)
+firstDay2015 <- ymd(str_c('2015-',mons,'-01'))
+firstDay2017 <- ymd(str_c('2017-',mons,'-01'))
+
+```
+  
+_4_
+```{r, echo = TRUE}
+howManyYears <- function(birthday){
+  birthday <- ymd(birthday)
+  ageDays <- today() - birthday
+  ageDays
+  ageSecs <- as.duration(ageDays)
+  as.numeric(ageSecs, "years")
+  }
+howManyYears('1994-10-22')
+```
+  
+_5_
+
+Original code from book is missing a parenthesis (why it won't work)
+```{r, eval = FALSE}
+(today() %--% (today() + years(1)) / months(1)
+```
+Adding missing parentheses the code actually runs 
+```{r}
+(today() %--% (today() + years(1)) )/ months(1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
