@@ -121,6 +121,12 @@ flights_dt %>%
   summarise(avg_dep_delay = mean(dep_delay)) %>% 
   ggplot(aes(x = sched_dep_hour, y = avg_dep_delay)) +
   geom_bar(stat = "identity")
+
+flights_dt %>% 
+  mutate(sched_dep_time = update(sched_dep_time, yday = 1)) %>% 
+  mutate(sched_dep_hour = hour(sched_dep_time)) %>% 
+  ggplot(aes(x = sched_dep_hour, y = mean(dep_delay))) +
+  geom_bar(stat = "identity")
 ```
 
 ```{r}
@@ -223,54 +229,3 @@ Adding missing parentheses the code actually runs
 ```{r}
 (today() %--% (today() + years(1)) )/ months(1)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
