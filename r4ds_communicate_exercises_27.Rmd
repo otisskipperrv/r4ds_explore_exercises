@@ -1,0 +1,151 @@
+---
+title: "r4ds_communicate_exercises_27"
+author: "Otis"
+date: "10/28/2017"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+## Chapter 27
+
+Import packages
+(I'm using include = FALSE in the R script but it's not outputting any code in the rmd file)
+```{r, include = FALSE}
+library(tidyverse)
+library(scales)
+```
+
+
+### 27.2.1
+
+_1_  
+Made a notebook  
+_2_  
+The knit function works (yay!)  
+_3_  
+Both have the similar workflow of allowing for markdown text with r-scripts being able to be run & output code throughout the file
+RNotebook doesn't have the knit option functionality, or the as descriptive YAML header up top
+From what I've seen so far they are quite similar
+_4_  
+Overall the knit plots to HTML, PDF & Word look very similar. Each has respective style differences for its file type (and is rendered in a different program accordingly). Things like font / color change slightly but overall structure stays the same
+
+### 27.3.1
+
+_1_  
+#### Otis' CV
+Otis Skipper  
+otisskipper@gmail.com  
+828.275.4007
+
+##### Education
+* University Of North Carolina Chapel Hill
+ *  __2012-2016__  
+ * B.S. In Mathematic
+ * 3.9 GPA
+
+#### Work Experience
+* Red Ventures Data Analyst
+  * __2016-Present__
+  * Create reporting for business teams to make actionable insights from data
+  * Validate that technologies are producing data accurately
+
+_2_  
+None of these seem to be working in rmarkdown output, but they are all from the rmarkdown cheatsheet
+This is question 2.[^1]  
+[^1]: Here is the footnote.
+
+horizontal rule/slide break:  
+***  
+> block quote
+
+
+_3_
+
+Ran it in separate markdown file
+
+### 27.4.7
+
+_1_
+```{r}
+knitr::opts_chunk$set(
+  echo = FALSE
+)
+```
+
+```{r}
+knitr::kable(diamonds %>% 
+  group_by(cut) %>% 
+  summarise(avg_carat = mean(carat)))
+
+knitr::kable(diamonds %>% 
+  group_by(color) %>% 
+  summarise(avg_carat = mean(carat)))
+
+knitr::kable(diamonds %>% 
+  group_by(clarity) %>% 
+  summarise(avg_carat = mean(carat)))
+
+```
+_2_  
+Table describing the largest 20 diamonds
+```{r}
+
+
+knitr::kable(diamonds %>% 
+  arrange(desc(carat)) %>% 
+  top_n(20))
+```
+
+_3_
+
+```{r}
+knitr::kable(diamonds %>% 
+  mutate(price = comma(price)) %>% 
+  arrange(desc(carat)) %>% 
+  top_n(20))
+```
+
+Percent of diaomonds > 2.5 carats ~= 0.2%
+```{r}
+total <- diamonds %>%
+  count()
+over <- diamonds %>% 
+  filter(carat > 2.5) %>% 
+  count()
+pct <- over / total
+paste(pct)
+```
+
+_4_
+Run it & d = 11, all timestamps are equal.  
+Change value of b & run again: value of d stays the same (so do timestamps for a, b, c). Only value of b & nowb change
+```{r, cache = TRUE, include = TRUE, eval = TRUE}
+a <- 2
+nowa <- lubridate::now()
+a
+nowa
+```
+
+```{r, cache = TRUE}
+b <- 2 + a
+nowb <- lubridate::now()
+b
+nowb
+```
+
+```{r, cache = TRUE}
+c <- 3 + a
+nowc <- lubridate::now()
+c
+nowc
+```
+
+```{r, cache = TRUE}
+d <- a + b + c
+nowd <- lubridate::now()
+d
+nowd
+```
+
