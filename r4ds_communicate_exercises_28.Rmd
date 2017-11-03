@@ -1,0 +1,200 @@
+---
+title: "Accelerator Exercises Ch. 28"
+author: "Otis"
+date: "11/1/2017"
+output: html_document
+---
+
+### Load Packages
+```{r, message = FALSE}
+library(tidyverse)
+```
+
+
+### Chapter 28
+
+#### 28.2.1
+_1_    
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Engine displacement (L)",
+    y = "Highway fuel economy (mpg)",
+    title = "Here's a custom title for my plot",
+    subtitle = "And here's a custom subtitle",
+    colour = "Car type"
+  )
+```
+
+_2_   
+Break out geom smooth function by class to see how displ and hwy behave within the class of each car type.
+For car types with a small number of data points the geom_smooth function doesn't have enough points for a strong fit, so we ignore the error message
+```{r, warning = FALSE}
+ggplot(mpg,aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  facet_grid(.~class)+
+  geom_smooth()
+```
+
+_3_  
+```{r}
+diamonds %>% 
+  ggplot(aes(price))+
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Historgram Distribution of Diamond Prices",
+    caption = "data taken from diamonds data set within ggplot",
+    x = "price of diamond",
+    y = "count of diamonds"
+  ) +
+  theme(legend.position = "none")
+```
+
+
+#### 28.3.1
+
+_1_  
+
+First Solution I got: There's a more elegant way to do this but it technically works
+```{r}
+
+displ <- c(Inf, Inf, -Inf, -Inf)
+hwy <- c(Inf, -Inf, -Inf, Inf)
+txt <- c("top right", "bottom right", "bottom left", "top left")
+tmp <- tibble(displ, hwy, txt)
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+
+  geom_text(aes(label = txt), data = tmp, hjust ="top", vjust = "right") +
+  geom_text(aes(label = txt), data = tmp, hjust ="bottom", vjust = "left") +
+  geom_text(aes(label = txt), data = tmp, hjust ="bottom", vjust = "right") +
+  geom_text(aes(label = txt), data = tmp, hjust ="top", vjust = "left")
+ 
+```
+
+Better solution (suggestion from Chris S. after meeting in Breakout Session)
+```{r}
+label_tr <- tibble(displ = Inf, hwy = Inf)
+label_br <- tibble(displ = Inf, hwy = -Inf)
+label_tl <- tibble(displ = -Inf, hwy = Inf)
+label_bl <- tibble(displ = -Inf, hwy = -Inf)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  geom_text(aes (label = "topr"), data = label_tr, vjust = "top", hjust = "right") +
+    geom_text(aes (label = "botr"), data = label_br, vjust = "bottom", hjust = "right") +
+  geom_text(aes (label = "topl"), data = label_tl, vjust = "top", hjust = "left") +
+  geom_text(aes (label = "botl"), data = label_bl, vjust = "bottom", hjust = "left") 
+
+```
+
+
+_2_  
+```{r}
+?annotate
+```
+Can pass in small annotations (Such as text labels) as a vector instead of having to put them into a data frame
+
+_3_   
+
+If text is generically defined across graph then it will pass through to each facet
+```{r}
+
+label <- tibble(
+  displ = Inf,
+  hwy = Inf,
+  label = "Increasing engine size is \nrelated to decreasing fuel economy."
+)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  geom_text(aes(label = label), data = label, vjust = "top", hjust = "right") +
+  facet_grid(drv~.)
+```
+
+But if text is restricted to a certain data point (as in the example below) that our data is being facted on, then it will only translate to the specific facet that has that value. ie: corvette is associated with drv r and thus only shows up in that specific facet
+```{r}
+best_in_class <- mpg %>%
+  group_by(class) %>%
+  filter(row_number(desc(hwy)) == 1)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_text(aes(label = model), data = best_in_class) +
+  facet_grid(drv~.)
+```
+
+_4_  
+"The `fill` aesthetic controls the background colour of the label" - R documentation
+
+_5_  
+arugments of arrow:
+angle, length, ends, type
+
+Examples of different uses for arrows
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  geom_segment(aes(x=displ, y=hwy, xend = displ +1, yend = hwy + 1), arrow = arrow(15, length = unit(0.1, "inches"), ends = "last", type = "closed"))
+
+  
+```
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  geom_segment(aes(x=2, y=40, xend = 7, yend = 15), arrow = arrow(40, length = unit(0.2, "inches"), ends = "both", type = "open"))
+```
+
+
+#### 28.4.4
+_1_  
+Load Hexbin Package
+```{r, message = FALSE}
+library(hexbin)
+```
+
+Original code used scale_colour_gradient - need to use scale_fill_gradient to get red/white values to appear
+
+```{r}
+
+df <- tibble(
+  x = rnorm(10000),
+  y = rnorm(10000)
+)
+ggplot(df, aes(x, y)) +
+  geom_hex() +
+  scale_fill_gradient(low = "white", high = "red") +
+  coord_fixed()
+```
+
+_2_
+
+First argument to both functions is `...`. For labs this is "A list of new name-value pairs", for scale this is "Other arguments passed on to continuous_scale to control name, limits, breaks, labels and so forth." They are both generic dots arguments, but control different things for each function
+
+_3_
+```{r}
+presidential %>%
+  mutate(id = 33 + row_number()) %>%
+  ggplot(aes(start, id, colour = party)) +
+    geom_point() +
+    geom_segment(aes(xend = end, yend = id)) +
+    scale_colour_manual(values = c(Republican = "red", Democratic = "blue")) +
+  scale_y_continuous("President Number", breaks = seq(34,44), label = seq(34,44)) +
+  scale_x_date("Year", date_breaks = "4 year", date_labels = "'%y") +
+  ggtitle("Presidential Terms By Party") +
+  geom_text(aes(label = presidential$name), nudge_y = -.4, nudge_x = 2100, show.legend =FALSE)
+?geom_text
+
+```
+
+_4_
+
+```{r}
+ggplot(diamonds, aes(carat, price)) +
+  geom_point(aes(colour = cut), alpha = 1/20) +
+  guides(colour = guide_legend(override.aes = list(alpha=1)))
+```
+
